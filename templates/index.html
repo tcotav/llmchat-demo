@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat App</title>
+    <style>
+        #chat-container {
+            height: 300px;
+            overflow-y: scroll;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container"></div>
+    <form id="chat-form">
+        <input type="text" id="chat-input" placeholder="Type your message...">
+        <input type="submit" value="Send">
+    </form>
+    <div id="upload-container">
+        This doesn't work yet.
+        <form id="upload-form" action="/upload" method="post" enctype="multipart/form-data">
+            <input type="file" name="file" id="file">
+            <input type="submit" value="Upload">
+        </form>
+    </div>
+
+    <script>
+        const chatContainer = document.getElementById('chat-container');
+        const chatForm = document.getElementById('chat-form');
+        const chatInput = document.getElementById('chat-input');
+
+        // Initialize the conversation history array
+        let conversationHistory = [];
+
+        chatForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const userInput = chatInput.value.trim();
+
+            if (userInput) {
+                appendMessage('user', userInput);
+                chatInput.value = '';
+
+                // Add the current user input to the conversation history
+                conversationHistory.push({ role: 'user', content: userInput });
+
+                const response = await fetchResponse(userInput);
+                appendMessage('bot', response.trim());
+
+                // Add the bot's response to the conversation history
+                conversationHistory.push({ role: 'assistant', content: response.trim() });
+            }
+        });
+
+        async function fetchResponse(userInput) {
+            body=JSON.stringify({ conversation: conversationHistory })
+            const response = await fetch('/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: body
+            });
+
+            const data = await response.json();
+            return data.message;
+        }
+
+        function appendMessage(sender, message) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add(sender);
+            messageElement.textContent = `${sender}: ${message}`;
+            chatContainer.appendChild(messageElement);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+    </script>
+</body>
+</html>

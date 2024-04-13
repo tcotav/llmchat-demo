@@ -3,6 +3,8 @@ from werkzeug.utils import secure_filename
 from flask_sslify import SSLify
 import os
 import bpschat
+import router
+import config
 
 app = Flask(__name__)
 app.config["JSON_AS_ASCII"] = False
@@ -43,7 +45,8 @@ def chat_msg():
         conversation_history = json_data['conversation']
         question=conversation_history[-1]['content']
 
-        response=bpschat.ask_document_with_state(1, question)
+        route_type=router.determine_request_route(question, model=config.llm_name, temperature=0.0)
+        response=router.follow_route_for_query(route_type, question, model=config.llm_name, temperature=0.0)
         print("in /chat, response is: ", response)
 
         log_info("chat_msg", {"response": response})

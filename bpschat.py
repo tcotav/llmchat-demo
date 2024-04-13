@@ -10,12 +10,11 @@ from langchain.prompts import PromptTemplate
 
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import RetrievalQA
-
+import config
 
 doclist = ["docs/blueplanetsix-lastresort.pdf"]
-openai.api_key  = os.environ['OPENAI_API_KEY']
-llm_name = "gpt-4" #"gpt-3.5-turbo"
-persist_directory = 'docs/chroma/'
+llm_name = config.llm_name
+persist_directory = config.persist_directory
 
 def load_db(doclist):
     loaders=[]
@@ -81,14 +80,13 @@ def ask_document_with_state(session_id, question):
     doc_question_template = """Use the following pieces of context to answer the question at the end.\
           If you don't know the answer, just say that you don't know, don't try to make up \
           an answer. Use three sentences maximum. Keep the answer as concise as possible. \
-          Always say "thanks for asking!" at the end of the answer. 
     Question: {question}
     Helpful Answer:""".format(question=question)
 
     retriever=vectordb.as_retriever(search_type="mmr")
 
     # 'stuff', 'map_reduce', "refine", "map_rerank"
-    chain_type = "stuff"
+    chain_type = "refine"
     qa = RetrievalQA.from_chain_type(
         llm=llm, chain_type=chain_type, retriever=retriever, return_source_documents=True)
 
@@ -103,22 +101,16 @@ if __name__ == '__main__':
     
     question_list=[
         "Who are the main characters of the story?",
-        "Who is the main character of the story?",
+        "Who is the main character of the story and why do you say that?",
         "Where does the story take place?",
         "Who owns the resort?",
         "Does Miskers owns that location?",
-        "What are the names of the raccoons in the story?"
+        "What are the names of the raccoons in the story?",
+        "What type of creature is Pudding?"
     ]
 
-    question_list=[
-        "Who is the main character?",
-    ]
-
-    import json
     count=1
     for question in question_list:
         result=ask_document_with_state(1, question)
-        #print(result)
-        jr=json.dumps(result)
-        print(jr)
+        print(count, question, result)
         count +=1
